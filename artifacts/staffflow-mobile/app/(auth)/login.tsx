@@ -61,7 +61,8 @@ const handleSubmit = async () => {
       // Employee login
       try {
         const domain = process.env.EXPO_PUBLIC_DOMAIN;
-        const baseUrl = domain ? `https://${domain}` : `http://10.0.2.2:3000`;
+       const protocol = domain && domain.includes("railway.app") ? "https" : "http";
+       const baseUrl = domain ? `${protocol}://${domain}` : `http://10.0.2.2:3000`;
         const response = await fetch(`${baseUrl}/api/auth/employee-login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -107,10 +108,10 @@ const handleSubmit = async () => {
         {/* Branded header */}
         <View style={styles.header}>
           <View style={styles.logoMark}>
-            <Text style={styles.logoText}>SF</Text>
+            <Text style={styles.logoText}>HR</Text>
           </View>
           <View style={styles.headerText}>
-            <Text style={styles.appName}>StaffFlow</Text>
+            <Text style={styles.appName}>HireMind</Text>
             <Text style={styles.tagline}>HR Management</Text>
           </View>
         </View>
@@ -205,14 +206,14 @@ const handleSubmit = async () => {
         </View>
 
         {/* Demo credentials */}
-        {loginType === "admin" && (
+       {/* {loginType === "admin" && (
           <View style={styles.demoBox}>
             <Ionicons name="information-circle-outline" size={14} color="#7588A3" />
             <View style={styles.demoText}>
               <Text style={styles.demoLabel}>Demo: admin@staffflow.com / password123</Text>
             </View>
           </View>
-        )}
+        )}  */}
 
         {/* Register link */}
         <View style={styles.footer}>

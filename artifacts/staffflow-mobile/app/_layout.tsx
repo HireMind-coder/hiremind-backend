@@ -21,8 +21,10 @@ SplashScreen.preventAutoHideAsync();
 
 const domain = process.env.EXPO_PUBLIC_DOMAIN;
 console.log("API Domain:", domain);
+
 if (domain) {
-  setBaseUrl(`https://${domain}`);
+  const protocol = domain.includes("railway.app") ? "https" : "http";
+  setBaseUrl(`${protocol}://${domain}`);
 } else {
   setBaseUrl(`http://10.0.2.2:3000`);
 }
@@ -76,6 +78,8 @@ useEffect(() => {
       <Stack.Screen name="salary" options={{ headerShown: true, animation: "slide_from_right", title: "Salary & Payroll" }} />
       <Stack.Screen name="payments" options={{ headerShown: true, animation: "slide_from_right", title: "Payments" }} />
       <Stack.Screen name="settings" options={{ headerShown: true, animation: "slide_from_right", title: "Settings" }} />
+      <Stack.Screen name="privacy-policy" options={{ headerShown: true, title: "Privacy Policy", animation: "slide_from_right" }}/>
+      <Stack.Screen name="kiosk" options={{ headerShown: false, animation: "slide_from_right" }} />
     </Stack>
   );
 }

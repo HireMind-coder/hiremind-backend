@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
+// const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 export async function sendAttendanceEmail({
   adminEmail,
   employeeName,
@@ -23,6 +23,7 @@ export async function sendAttendanceEmail({
     ? `${employeeName} has checked in at ${time} on ${date}.`
     : `${employeeName} has checked out at ${time} on ${date}.`;
 
+if (!resend) { console.log("Email skipped - no API key"); return; }
   await resend.emails.send({
     from: "StaffFlow <onboarding@resend.dev>",
     to: adminEmail,

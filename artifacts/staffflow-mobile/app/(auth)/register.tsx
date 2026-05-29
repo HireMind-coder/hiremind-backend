@@ -87,13 +87,13 @@ export default function RegisterScreen() {
       {/* Logo */}
       <View style={styles.logo}>
         <View style={styles.logoMark}>
-          <Text style={styles.logoText}>SF</Text>
+          <Text style={styles.logoText}>HM</Text>
         </View>
-        <Text style={styles.appName}>StaffFlow</Text>
+        <Text style={styles.appName}>HireMind</Text>
       </View>
 
       <Text style={styles.title}>Create your account</Text>
-      <Text style={styles.subtitle}>Set up StaffFlow for your organization</Text>
+      <Text style={styles.subtitle}>Set up HireMind for your organization</Text>
 
       <View style={styles.form}>
         {/* Name */}
@@ -105,7 +105,7 @@ export default function RegisterScreen() {
               style={styles.input}
               value={name}
               onChangeText={(v) => { setName(v); setErrors((e) => ({ ...e, name: undefined })); }}
-              placeholder="Rahul Sharma"
+              placeholder="Amit Kumar"
               placeholderTextColor="#9CA3AF"
               autoCapitalize="words"
               returnKeyType="next"

@@ -16,6 +16,8 @@ import {
 import { sendAttendanceEmail } from "../lib/emailService";
 import { usersTable } from "@workspace/db";
 import { FaceAttendanceModal } from "@/components/FaceAttendanceModal";
+import { Linking } from "react-native";
+import { router } from "expo-router";
 
 function formatDisplayTime(time: string): string {
   if (!time) return "";
@@ -67,6 +69,16 @@ function AttendanceRow({ record, colors, onCheckout }: { record: any; colors: an
           {record.checkIn ? `  •  In: ${formatDisplayTime(record.checkIn)}` : ""}
           {record.checkOut ? `  •  Out: ${formatDisplayTime(record.checkOut)}` : ""}
         </Text>
+        {record.latitude && record.longitude && (
+          <Pressable onPress={() => {
+            const url = `https://www.google.com/maps?q=${record.latitude},${record.longitude}`;
+            Linking.openURL(url);
+          }}>
+            <Text style={{ color: "#2563EB", fontSize: 11, fontFamily: "Inter_500Medium" }}>
+              📍 View Location
+            </Text>
+          </Pressable>
+        )}
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         {record.status === "present" && record.checkIn && !record.checkOut && (
@@ -233,6 +245,13 @@ export default function AttendanceScreen() {
           <Ionicons name="chevron-forward" size={22} color={colors.foreground} />
         </Pressable>
         <View style={styles.headerBtns}>
+            <Pressable
+              style={[styles.markBtn, { backgroundColor: "#7C3AED" }]}
+              onPress={() => router.push("/kiosk")}
+            >
+              <Ionicons name="tv-outline" size={14} color="#fff" />
+              <Text style={styles.markBtnText}>Kiosk</Text>
+            </Pressable>
             <Pressable
               style={[styles.scanBtn, { backgroundColor: "#16A34A" }]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setShowFaceModal(true); }}
@@ -450,21 +469,21 @@ export default function AttendanceScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   monthNav: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingBottom: 12,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    paddingHorizontal: 12, paddingBottom: 12,
   },
-  navBtn: { padding: 6 },
-  monthLabel: { flex: 1, textAlign: "center", fontSize: 17, fontFamily: "Inter_700Bold" },
-  headerBtns: { flexDirection: "row", gap: 8 },
+  navBtn: { padding: 2 },
+  monthLabel: {  flexWrap: "nowrap", textAlign: "center", fontSize: 15, fontFamily: "Inter_700Bold",  marginHorizontal: 4, },
+  headerBtns: { flexDirection: "row", gap: 6 , },
   scanBtn: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 7,
   },
   markBtn: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 7,
   },
-  markBtnText: { color: "#fff", fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  markBtnText: { color: "#fff", fontSize: 12, fontFamily: "Inter_600SemiBold" },
   chips: { flexDirection: "row", paddingHorizontal: 16, gap: 10, marginBottom: 12 },
   chip: { flex: 1, borderRadius: 12, padding: 12, alignItems: "center" },
   chipCount: { fontSize: 22, fontFamily: "Inter_700Bold" },

@@ -107,7 +107,7 @@ export default function SettingsScreen() {
         <SettingRow
           icon="information-circle-outline"
           label="App Version"
-          sublabel="StaffFlow Mobile 1.0.0"
+          sublabel="HireMind Mobile 1.0.0"
           iconBg="#EDECFE"
           iconColor="#576DFA"
           colors={colors}
@@ -119,6 +119,7 @@ export default function SettingsScreen() {
           iconBg="#DBEAFE"
           iconColor="#2563EB"
           colors={colors}
+          onPress={() => router.push("/privacy-policy")}
         />
       </View>
 

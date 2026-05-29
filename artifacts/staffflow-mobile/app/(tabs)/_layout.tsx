@@ -135,6 +135,12 @@ function ClassicTabLayout() {
             ),
         }}
       />
+      <Tabs.Screen
+        name="employees/[id]"
+        options={{
+          href: null,  // removes it from the tab bar completely
+        }}
+      />
     </Tabs>
   );
 }

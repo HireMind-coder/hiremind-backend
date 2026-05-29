@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Platform, Pressable } from "react-native";
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Platform, Pressable, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -8,6 +8,9 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { Alert } from "react-native";
+import * as Location from "expo-location";
+
+
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -55,20 +58,44 @@ export default function EmployeeAttendanceScreen() {
     queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
   };
 
-  const handleCheckIn = () => {
-    if (todayRecord?.checkIn) {
-      Alert.alert("Already Checked In", `You checked in at ${formatDisplayTime(todayRecord.checkIn)}`);
-      return;
-    }
-    const checkIn = formatTime(new Date());
-    markAttendance.mutate(
-      { data: { records: [{ employeeId: empId, date: todayStr, status: "present", checkIn, checkOut: null }] } },
-      {
-        onSuccess: () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); invalidate(); },
-        onError: () => Alert.alert("Error", "Failed to check in"),
-      }
-    );
-  };
+ const handleCheckIn = async () => {
+   if (todayRecord?.checkIn) {
+     Alert.alert("Already Checked In", `You checked in at ${formatDisplayTime(todayRecord.checkIn)}`);
+     return;
+   }
+
+   // Request location permission
+   const { status } = await Location.requestForegroundPermissionsAsync();
+   if (status !== "granted") {
+     Alert.alert("Permission Denied", "Location permission is required for attendance.");
+     return;
+   }
+
+   // Get current location
+   const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+   const { latitude, longitude } = location.coords;
+
+   const checkIn = formatTime(new Date());
+   markAttendance.mutate(
+     { data: { records: [{
+       employeeId: empId,
+       date: todayStr,
+       status: "present",
+       checkIn,
+       checkOut: null,
+       latitude,   // ← add this
+       longitude,  // ← add this
+     }] } },
+     {
+       onSuccess: () => {
+         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+         invalidate();
+         Alert.alert("✅ Checked In", `Time: ${checkIn}\n📍 Location saved`);
+       },
+       onError: () => Alert.alert("Error", "Failed to check in"),
+     }
+   );
+ };
 
   const handleCheckOut = () => {
     if (!todayRecord?.checkIn) {
@@ -174,6 +201,16 @@ export default function EmployeeAttendanceScreen() {
                   {item.checkIn ? `In: ${formatDisplayTime(item.checkIn)}` : ""}
                   {item.checkOut ? `  •  Out: ${formatDisplayTime(item.checkOut)}` : ""}
                 </Text>
+                {item.latitude && item.longitude && (
+                  <Pressable onPress={() => {
+                    const url = `https://www.google.com/maps?q=${item.latitude},${item.longitude}`;
+                    Linking.openURL(url);
+                  }}>
+                    <Text style={{ color: "#2563EB", fontSize: 11, fontFamily: "Inter_500Medium" }}>
+                      📍 View on Maps
+                    </Text>
+                  </Pressable>
+                )}
               </View>
               <View style={[styles.rowBadge, { backgroundColor: item.status === "present" ? "#DCFCE7" : "#FEE2E2" }]}>
                 <Text style={{ color: item.status === "present" ? "#16A34A" : "#DC2626", fontSize: 11, fontFamily: "Inter_600SemiBold" }}>
