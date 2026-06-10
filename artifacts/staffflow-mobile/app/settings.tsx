@@ -107,7 +107,7 @@ export default function SettingsScreen() {
         <SettingRow
           icon="information-circle-outline"
           label="App Version"
-          sublabel="HireMind Mobile 1.0.0"
+          sublabel="HireMind Mobile 1.0.1"
           iconBg="#EDECFE"
           iconColor="#576DFA"
           colors={colors}
