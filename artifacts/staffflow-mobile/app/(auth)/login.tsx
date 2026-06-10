@@ -61,8 +61,8 @@ const handleSubmit = async () => {
       // Employee login
       try {
         const domain = process.env.EXPO_PUBLIC_DOMAIN;
-       const protocol = domain && domain.includes("railway.app") ? "https" : "http";
-       const baseUrl = domain ? `${protocol}://${domain}` : `http://10.0.2.2:3000`;
+        const protocol = domain && domain.includes("railway.app") ? "https" : "http";
+        const baseUrl = domain ? `${protocol}://${domain}` : `http://10.0.2.2:3000`;
         const response = await fetch(`${baseUrl}/api/auth/employee-login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -73,6 +73,8 @@ const handleSubmit = async () => {
           Alert.alert("Sign in failed", data.error || "Invalid email or password");
           return;
         }
+        console.log("============== EMPLOYEE TOKEN ==============", data.token);
+
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await login(data.token, {
           id: data.employee.id,
