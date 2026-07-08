@@ -271,7 +271,7 @@ export default function TasksScreen() {
               style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
               value={form.dueDate}
               onChangeText={(v) => setForm(f => ({ ...f, dueDate: v }))}
-              placeholder="2025-02-28"
+              placeholder="2026-02-28"
               placeholderTextColor={colors.mutedForeground}
               keyboardType="numbers-and-punctuation"
             />

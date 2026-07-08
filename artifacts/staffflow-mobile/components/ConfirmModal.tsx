@@ -1,3 +1,4 @@
+
 import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
@@ -29,6 +30,7 @@ export function ConfirmModal({
       transparent
       animationType="fade"
       onRequestClose={onCancel}
+
     >
       <Pressable style={styles.backdrop} onPress={onCancel}>
         <Pressable style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>

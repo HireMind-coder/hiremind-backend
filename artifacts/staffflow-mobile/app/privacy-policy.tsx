@@ -63,7 +63,7 @@ export default function PrivacyPolicyScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.foreground }]}>Privacy Policy</Text>
         <Text style={[styles.meta, { color: colors.mutedForeground }]}>
-          Effective Date: May 13, 2026 • Version 1.0
+          Effective Date: May 13, 2026 • Version 1.0.1
         </Text>
       </View>
 

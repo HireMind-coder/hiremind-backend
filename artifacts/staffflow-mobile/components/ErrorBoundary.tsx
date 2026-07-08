@@ -51,4 +51,6 @@ export class ErrorBoundary extends Component<
       this.props.children
     );
   }
+
 }
+

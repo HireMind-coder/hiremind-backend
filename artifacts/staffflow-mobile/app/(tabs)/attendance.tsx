@@ -540,3 +540,6 @@ const styles = StyleSheet.create({
   empName: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   empRole: { fontSize: 12, fontFamily: "Inter_400Regular" },
 });
+
+
+

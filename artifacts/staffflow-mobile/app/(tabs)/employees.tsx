@@ -16,7 +16,7 @@ import { useRouter } from "expo-router";
 const SALARY_TYPES = ["monthly", "daily"];
 const STATUSES = ["active", "inactive"];
 const ROLES = ["Developer", "BDM",  "Manager", "HR", "Sales", "Marketing", "Accountant", "IT Support", "Operations", "Other"];
-const DEPARTMENTS = ["Engineering", "Design", "Management", "HR", "Sales", "Marketing", "Finance", "Support", "Operations", "Other"];
+const DEPARTMENTS = ["Engineering", "Design", "Developer", "Management", "HR", "Sales", "Marketing", "Finance", "Support", "Operations", "Other"];
 
 interface EmployeeForm {
   name: string;
@@ -160,6 +160,7 @@ export default function EmployeesScreen() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<EmployeeForm>(EMPTY_FORM);
+  const [showPassword, setShowPassword] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [enrollTarget, setEnrollTarget] = useState<any | null>(null);
 
@@ -349,12 +350,24 @@ export default function EmployeesScreen() {
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>
               {editingId ? "New Password (leave blank to keep)" : "Password *"}
             </Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-              value={form.password} onChangeText={(v) => setForm(f => ({ ...f, password: v }))}
-              placeholder="Min 6 characters" placeholderTextColor={colors.mutedForeground}
-              autoCapitalize="none" secureTextEntry
-            />
+            <View style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, height: 48, marginBottom: 16 }]}>
+              <TextInput
+                style={{ flex: 1, color: colors.foreground, fontSize: 15, fontFamily: "Inter_400Regular" }}
+                value={form.password}
+                onChangeText={(v) => setForm(f => ({ ...f, password: v }))}
+                placeholder="Min 6 characters"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="none"
+                secureTextEntry={!showPassword}
+              />
+              <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={8}>
+                <Ionicons
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  size={20}
+                  color={colors.mutedForeground}
+                />
+              </Pressable>
+            </View>
 
             {/* Salary */}
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Salary Amount *</Text>
