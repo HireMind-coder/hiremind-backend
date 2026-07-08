@@ -20,8 +20,6 @@ const DEPARTMENTS = ["Engineering", "Design", "Developer", "Management", "HR", "
 
 interface EmployeeForm {
   name: string;
-
-
   phone: string;
   email: string;
   role: string;
