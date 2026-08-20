@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "408067176253",
+    "project_id": "hiremind-980c5",
+    "storage_bucket": "hiremind-980c5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:408067176253:android:0884ee4f14fa1a20383754",
+        "android_client_info": {
+          "package_name": "com.allegient.hiremind"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWr3wdfxDMzUXSDVY9kBRd_KZmXWJ_dM8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
