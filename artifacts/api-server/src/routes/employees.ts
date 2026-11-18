@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, employeesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { checkStaffLimit } from "../lib/billing";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
@@ -46,6 +47,13 @@ router.post("/employees", requireAuth, async (req, res): Promise<void> => {
   const parsed = CreateEmployeeBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  // Plan staff limit (Subscriptions & Billing)
+  const limit = await checkStaffLimit(adminId);
+  if (!limit.ok) {
+    res.status(403).json({ error: limit.error, code: "STAFF_LIMIT_REACHED" });
     return;
   }
 
@@ -169,6 +177,22 @@ router.patch("/employees/:id/change-password", requireAuth, async (req, res): Pr
   res.json({ success: true, message: "Password updated successfully" });
 });
 
+
+// Delete ALL staff for the logged-in admin's company. Admin only.
+router.delete("/employees", requireAuth, async (req, res): Promise<void> => {
+  const { adminId, role, userId } = (req as any).user;
+  if (role === "employee" || !userId) {
+    res.status(403).json({ error: "Only an admin can delete all staff" });
+    return;
+  }
+
+  const deleted = await db.delete(employeesTable)
+    .where(eq(employeesTable.adminId, adminId))
+    .returning({ id: employeesTable.id });
+
+  res.json({ success: true, deletedCount: deleted.length });
+});
+
 router.delete("/employees/:id", requireAuth, async (req, res): Promise<void> => {
   const { adminId } = (req as any).user;
   const params = DeleteEmployeeParams.safeParse(req.params);
@@ -241,16 +265,23 @@ if (!valid) {
 });
 
 // Admin reset employee password
-router.post("/auth/reset-employee-password", async (req, res): Promise<void> => {
-  const { email, newPassword } = req.body;
-  if (!email || !newPassword) {
-    res.status(400).json({ error: "Email and password required" });
+router.post("/auth/reset-employee-password", requireAuth, async (req, res): Promise<void> => {
+  const { adminId, role, userId } = (req as any).user;
+  if (role !== "admin" || !userId) {
+    res.status(403).json({ error: "Only an admin can reset an employee's password" });
     return;
   }
-  const hash = await bcrypt.hash(newPassword, 10);
+
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword || String(newPassword).length < 6) {
+    res.status(400).json({ error: "Email and a password of at least 6 characters are required" });
+    return;
+  }
+
+  const hash = await bcrypt.hash(String(newPassword), 10);
   const [employee] = await db.update(employeesTable)
     .set({ passwordHash: hash })
-    .where(eq(employeesTable.email, email))
+    .where(and(eq(employeesTable.email, email), eq(employeesTable.adminId, adminId)))
     .returning();
   if (!employee) {
     res.status(404).json({ error: "Employee not found" });

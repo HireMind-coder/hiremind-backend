@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, paymentsTable, employeesTable, attendanceTable } from "@workspace/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { notifyEmployee } from "../lib/pushService";
 import {
   CreatePaymentBody,
   UpdatePaymentBody,
@@ -154,6 +155,15 @@ router.post("/payments", requireAuth, async (req, res): Promise<void> => {
     amount: String(parsed.data.amount),
     paidAt: parsed.data.status === "paid" ? new Date() : null,
   }).returning();
+
+
+  if (payment.status === 'paid') {
+    void notifyEmployee(employee.id, {
+      title: 'Payment received',
+      body: `${payment.type}: ₹${Number(payment.amount).toLocaleString('en-IN')} paid via ${payment.method}`,
+      screen: '/(employee)/',
+    });
+  }
 
   res.status(201).json({
     ...payment,

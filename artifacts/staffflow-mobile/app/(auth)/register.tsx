@@ -33,6 +33,7 @@ export default function RegisterScreen() {
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -51,7 +52,7 @@ export default function RegisterScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     registerMutation.mutate(
-      { data: { name, email, password, companyName } },
+      { data: { name, email, password, companyName, referralCode: referralCode.trim() || undefined } as any },
       {
         onSuccess: async (response) => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -175,7 +176,25 @@ export default function RegisterScreen() {
           </View>
           {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
         </View>
-
+        {/* Referral code (optional) */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Referral code (optional)</Text>
+          <View style={styles.inputRow}>
+            <Ionicons name="gift-outline" size={18} color="#6B7280" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              value={referralCode}
+              onChangeText={(v) => setReferralCode(v.toUpperCase())}
+              placeholder="HMXXXXX"
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={12}
+              returnKeyType="done"
+              testID="input-referral"
+            />
+          </View>
+        </View>
         <Pressable
           style={({ pressed }) => [styles.submitBtn, pressed && styles.submitPressed, registerMutation.isPending && styles.submitDisabled]}
           onPress={handleSubmit}

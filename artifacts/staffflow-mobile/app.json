@@ -20,11 +20,16 @@
       }
     },
     "android": {
+      "versionCode": 2,
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
       "usesCleartextTraffic": true,
       "package": "com.allegient.hiremind"
@@ -33,6 +38,15 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
+      ["expo-notifications", { "color": "#576DFA" }],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "HireMind shares your work location with your employer after you punch in.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
       [
         "expo-router",
         {

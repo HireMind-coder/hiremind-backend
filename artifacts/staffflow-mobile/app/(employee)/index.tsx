@@ -20,6 +20,20 @@ function StatCard({ label, value, icon, color, bg, onPress }: { label: string; v
   );
 }
 
+// Tiles under the stats. Add a line here to add a tile.
+const QUICK_ACTIONS: Array<{
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  href: string;
+  bg: string;
+  color: string;
+}> = [
+  { label: "Request Leave", icon: "airplane-outline", href: "/request-leave", bg: "#FEF3C7", color: "#D97706" },
+  { label: "Holiday List", icon: "calendar-outline", href: "/employee-holidays", bg: "#FCE7F3", color: "#DB2777" },
+  { label: "My Documents", icon: "folder-open-outline", href: "/documents", bg: "#DBEAFE", color: "#2563EB" },
+  { label: "Refer a Friend", icon: "gift-outline", href: "/refer-a-friend", bg: "#D1FAE5", color: "#059669" },
+];
+
 export default function EmployeeDashboard() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -136,7 +150,21 @@ export default function EmployeeDashboard() {
           onPress={() => router.push("/(employee)/tasks")}
         />
       </View>
-
+      {/* Quick Actions */}
+      <View style={styles.actionsGrid}>
+        {QUICK_ACTIONS.map((a) => (
+          <Pressable
+            key={a.label}
+            onPress={() => router.push(a.href as any)}
+            style={({ pressed }) => [styles.actionTile, { backgroundColor: colors.card, borderColor: colors.border }, pressed && { opacity: 0.7 }]}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: a.bg }]}>
+              <Ionicons name={a.icon} size={22} color={a.color} />
+            </View>
+            <Text style={[styles.actionLabel, { color: colors.foreground }]}>{a.label}</Text>
+          </Pressable>
+        ))}
+      </View>
       {/* Recent Attendance */}
       {myAttendance.length > 0 && (
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -189,6 +217,10 @@ const styles = StyleSheet.create({
   statIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   statValue: { fontSize: 26, fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  actionsGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 12, paddingHorizontal: 16, marginBottom: 16 },
+  actionTile: { width: "31%", borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, borderWidth: 1, alignItems: "center", gap: 10 },
+  actionIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  actionLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", textAlign: "center" },
   section: { marginHorizontal: 16, marginBottom: 16, borderRadius: 16, padding: 16, borderWidth: 1 },
   sectionTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 12 },
   attRow: { flexDirection: "row", alignItems: "center", paddingVertical: 10, borderTopWidth: 1, gap: 8 },

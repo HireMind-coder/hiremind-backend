@@ -1,16 +1,18 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator,
-  Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert,
+  Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, Linking,
 } from "react-native";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
+import { getBaseUrl } from "@/constants/api";
 import {
   useListLeaves, useCreateLeave, useApproveLeave, useRejectLeave, useDeleteLeave,
-  useGetLeaveBalances, useListEmployees,
+  useGetLeaveBalances, useListEmployees, customFetch,
 } from "@workspace/api-client-react";
 
 type Filter = "all" | "pending" | "approved" | "rejected";
@@ -70,13 +72,23 @@ function LeaveRow({
           {new Date(leave.startDate).toLocaleDateString("en", { day: "numeric", month: "short" })}
           {" → "}
           {new Date(leave.endDate).toLocaleDateString("en", { day: "numeric", month: "short" })}
-          {"  "}({leave.days} {leave.days === 1 ? "day" : "days"})
+          {"  "}({leave.halfDay ? "Half day" : `${leave.days} ${leave.days === 1 ? "day" : "days"}`})
         </Text>
       </View>
       {leave.reason ? (
         <Text style={[styles.leaveReason, { color: colors.mutedForeground }]} numberOfLines={2}>
           {leave.reason}
         </Text>
+      ) : null}
+      {leave.attachmentUrl ? (
+        <Pressable
+          onPress={() => Linking.openURL(`${getBaseUrl()}${leave.attachmentUrl}`)}
+          style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+          hitSlop={6}
+        >
+          <Ionicons name="attach" size={14} color="#1D9BF0" />
+          <Text style={{ color: "#1D9BF0", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>View attachment</Text>
+        </Pressable>
       ) : null}
       {leave.status === "pending" && (
         <View style={styles.leaveActions}>
@@ -124,6 +136,15 @@ export default function LeavesScreen() {
   });
   const { data: balances } = useGetLeaveBalances({});
   const { data: employees } = useListEmployees({});
+  const { data: customLeaveTypes } = useQuery({
+      queryKey: ["attendance-leave-types"],
+      queryFn: () => customFetch<{ id: number; name: string }[]>("/api/attendance-settings/leave-types"),
+      throwOnError: false,
+    });
+    const leaveTypes = [
+      ...LEAVE_TYPES,
+      ...(customLeaveTypes ?? []).map((l) => l.name).filter((n) => !LEAVE_TYPES.includes(n.toLowerCase())),
+    ];
   const createLeave = useCreateLeave();
   const approveLeave = useApproveLeave();
   const rejectLeave = useRejectLeave();
@@ -271,7 +292,7 @@ export default function LeavesScreen() {
 
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Leave Type</Text>
             <View style={styles.typeRow}>
-              {LEAVE_TYPES.map((t) => (
+              {leaveTypes.map((t) => (
                 <Pressable
                   key={t}
                   style={[

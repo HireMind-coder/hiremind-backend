@@ -9,6 +9,17 @@ import dashboardRouter from "./dashboard";
 import reportsRouter from "./reports";
 import leavesRouter from "./leaves";
 import faceRouter from "./face";
+import pushRouter from "./push";
+import teamRouter from "./team";
+import notificationsRouter from "./notifications";
+import companyReportsRouter from "./companyReports";
+import attendanceSettingsRouter from "./attendanceSettings";
+import liveTrackRouter from "./liveTrack";
+import companyRouter from "./company";
+import billingRouter from "./billing";
+import myLeavesRouter from "./myLeaves";
+import documentsRouter from "./documents";
+import referralsRouter from "./referrals";
 
 const router: IRouter = Router();
 
@@ -22,5 +33,16 @@ router.use(dashboardRouter);
 router.use(reportsRouter);
 router.use(leavesRouter);
 router.use(faceRouter);
+router.use(pushRouter);
+router.use(teamRouter);
+router.use(notificationsRouter);
+router.use(companyReportsRouter);
+router.use(attendanceSettingsRouter);
+router.use(liveTrackRouter);
+router.use(companyRouter);
+router.use(billingRouter);
+router.use(myLeavesRouter);
+router.use(documentsRouter);
+router.use(referralsRouter);
 
 export default router;

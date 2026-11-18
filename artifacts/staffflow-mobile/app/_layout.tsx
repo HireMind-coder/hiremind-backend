@@ -13,9 +13,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { setBaseUrl } from "@workspace/api-client-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import "@/services/liveTracking"; // registers the background location task
 
 SplashScreen.preventAutoHideAsync();
 
@@ -55,7 +57,7 @@ const queryClient = new QueryClient({
 
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
-
+  usePushNotifications();
 useEffect(() => {
     if (!isLoading) {
       if (user) {
@@ -79,7 +81,40 @@ useEffect(() => {
       <Stack.Screen name="payments" options={{ headerShown: true, animation: "slide_from_right", title: "Payments" }} />
       <Stack.Screen name="settings" options={{ headerShown: true, animation: "slide_from_right", title: "Settings" }} />
       <Stack.Screen name="privacy-policy" options={{ headerShown: true, title: "Privacy Policy", animation: "slide_from_right" }}/>
+      <Stack.Screen name="notifications" options={{ headerShown: true, title: "Notifications", animation: "slide_from_right" }} />
+      <Stack.Screen name="reports" options={{ headerShown: true, title: "Company Reports", animation: "slide_from_right" }} />
+      <Stack.Screen name="report-form" options={{ headerShown: true, title: "Report", animation: "slide_from_right" }} />
       <Stack.Screen name="kiosk" options={{ headerShown: false, animation: "slide_from_right" }} />
+      <Stack.Screen name="team-attendance" options={{ headerShown: true, title: "Team Attendance", animation: "slide_from_right" }} />
+      <Stack.Screen name="users-permissions" options={{ headerShown: true, title: "Users & Permissions", animation: "slide_from_right" }} />
+      <Stack.Screen name="team-members" options={{ headerShown: true, title: "Team", animation: "slide_from_right" }} />
+      <Stack.Screen name="update-roles" options={{ headerShown: true, title: "Update Roles", animation: "slide_from_right" }} />
+      <Stack.Screen name="terms" options={{ headerShown: true, title: "Terms & Conditions", animation: "slide_from_right" }} />
+      <Stack.Screen name="request-feature" options={{ headerShown: true, title: "Request a Feature", animation: "slide_from_right" }} />
+      <Stack.Screen name="attendance-settings" options={{ headerShown: true, title: "Attendance Settings", animation: "slide_from_right" }} />
+      <Stack.Screen name="geofence-settings" options={{ headerShown: true, title: "GPS Based Geofence", animation: "slide_from_right" }} />
+      <Stack.Screen name="device-requests" options={{ headerShown: true, title: "Device Verification Requests", animation: "slide_from_right" }} />
+      <Stack.Screen name="custom-leaves" options={{ headerShown: true, title: "Custom Paid Leaves", animation: "slide_from_right" }} />
+      <Stack.Screen name="holidays" options={{ headerShown: true, title: "Holiday List", animation: "slide_from_right" }} />
+      <Stack.Screen name="live-track" options={{ headerShown: true, title: "Live Locations", animation: "slide_from_right" }} />
+      <Stack.Screen name="company-settings" options={{ headerShown: true, title: "Company Settings", animation: "slide_from_right" }} />
+      <Stack.Screen name="company-details" options={{ headerShown: true, title: "Company Details", animation: "slide_from_right" }} />
+      <Stack.Screen name="branches" options={{ headerShown: true, title: "Branches", animation: "slide_from_right" }} />
+      <Stack.Screen name="add-branch" options={{ headerShown: true, title: "Add Branch", animation: "slide_from_right" }} />
+      <Stack.Screen name="departments" options={{ headerShown: true, title: "Departments", animation: "slide_from_right" }} />
+      <Stack.Screen name="billing" options={{ headerShown: true, title: "Subscriptions & Billing", animation: "slide_from_right" }} />
+      <Stack.Screen name="wallet-history" options={{ headerShown: true, title: "Wallet History", animation: "slide_from_right" }} />
+      <Stack.Screen name="add-funds" options={{ headerShown: true, title: "Add Funds", animation: "slide_from_right" }} />
+      <Stack.Screen name="upgrade-plan" options={{ headerShown: true, title: "Upgrade Plan", animation: "slide_from_right" }} />
+      <Stack.Screen name="renew-plan" options={{ headerShown: true, title: "Renew Plan", animation: "slide_from_right" }} />
+      <Stack.Screen name="plan-details" options={{ headerShown: true, title: "Current Plan Details", animation: "slide_from_right" }} />
+      <Stack.Screen name="invoice-history" options={{ headerShown: true, title: "Invoice History", animation: "slide_from_right" }} />
+      <Stack.Screen name="billing-details" options={{ headerShown: true, title: "Billing Details", animation: "slide_from_right" }} />
+      <Stack.Screen name="checkout" options={{ headerShown: true, title: "Payment", animation: "slide_from_right" }} />
+      <Stack.Screen name="request-leave" options={{ headerShown: true, title: "Request Leave", animation: "slide_from_right" }} />
+      <Stack.Screen name="employee-holidays" options={{ headerShown: true, title: "Holiday List", animation: "slide_from_right" }} />
+      <Stack.Screen name="documents" options={{ headerShown: true, title: "My Documents", animation: "slide_from_right" }} />
+      <Stack.Screen name="refer-a-friend" options={{ headerShown: true, title: "Refer a Friend", animation: "slide_from_right" }} />
     </Stack>
   );
 }

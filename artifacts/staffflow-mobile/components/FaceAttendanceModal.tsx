@@ -20,10 +20,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Location from "expo-location";
+import { getDeviceInfo, isMockedLocation } from "@/services/deviceInfo";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useVerifyAttendance, getTodayStatus } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { syncLiveTrackingOnCheckIn, stopLiveTracking } from "@/services/liveTracking";
 
 const COUNTDOWN_MS = 3000;
 
@@ -156,13 +158,13 @@ export function FaceAttendanceModal({ visible, employees, onSuccess, onClose }: 
   }, []);
 
   /** Try to get GPS coordinates (non-blocking, fails gracefully) */
-  const getLocation = useCallback(async (): Promise<{ latitude: number; longitude: number } | null> => {
+  const getLocation = useCallback(async (): Promise<{ latitude: number; longitude: number; mocked: boolean } | null> => {
     if (Platform.OS === "web") return null;
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return null;
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+      return { latitude: loc.coords.latitude, longitude: loc.coords.longitude, mocked: isMockedLocation(loc) };
     } catch {
       return null;
     }
@@ -181,7 +183,7 @@ export function FaceAttendanceModal({ visible, employees, onSuccess, onClose }: 
   }, []);
 
   // Employee is always passed directly — never read from stale state closure
-  const submitVerification = useCallback(async (emp: Employee, imageBase64: string, coords: { latitude: number; longitude: number } | null) => {
+ const submitVerification = useCallback(async (emp: Employee, imageBase64: string, coords: { latitude: number; longitude: number; mocked: boolean } | null) => {
     clearAllTimers();
     setStep("verifying");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -189,12 +191,14 @@ export function FaceAttendanceModal({ visible, employees, onSuccess, onClose }: 
     console.log("[FaceAttendance] Sending to backend — employeeId:", emp.id);
 
     try {
+      const device = await getDeviceInfo();
       const result = await verifyAttendance({
         data: {
           employeeId: emp.id,
           imageBase64,
-          ...(coords ?? {}),
-        },
+          ...(coords ?? { mocked: false }),
+          ...device,
+        } as any,
       });
 
       console.log("[FaceAttendance] Match Score:", result.matchScore, "| Action:", result.action);
@@ -208,6 +212,9 @@ export function FaceAttendanceModal({ visible, employees, onSuccess, onClose }: 
 
       if (result.matched) {
         setStep("success");
+        // Auto-Live Track: start after punch-in, stop after punch-out
+           if (result.action === "check_in") void syncLiveTrackingOnCheckIn(emp.id);
+           else if (result.action === "check_out") void stopLiveTracking();
         // Distinct haptics for check-in vs check-out
         if (result.action === "check_out" || result.action === "already_checked_out") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);

@@ -11,6 +11,8 @@ import {
   initFaceService,
 } from "../lib/faceService";
 import { logger } from "../lib/logger";
+import { sendAttendanceEmail } from "../lib/emailService";
+import { enforceAttendanceRules } from "../lib/attendanceRules";
 
 const router = Router();
 
@@ -114,11 +116,17 @@ router.post(
       imageBase64,
       latitude,
       longitude,
+      mocked,
+      deviceId,
+      deviceName,
     } = req.body as {
       employeeId: number;
       imageBase64: string;
       latitude?: number;
       longitude?: number;
+      mocked?: boolean;
+      deviceId?: string;
+      deviceName?: string;
     };
 
     if (!employeeId || !imageBase64) {
@@ -142,6 +150,22 @@ router.post(
 
     if (!employee) {
       res.status(404).json({ error: "Employee not found" });
+      return;
+    }
+    // Attendance Settings: geofence / fake GPS / device verification
+    const rule = await enforceAttendanceRules({
+      adminId,
+      user: (req as any).user,
+      employeeId,
+      latitude,
+      longitude,
+      mocked,
+      deviceId,
+      deviceName,
+      needsLocation: true,
+    });
+    if (!rule.ok) {
+      res.status(rule.status).json({ error: rule.error, code: rule.code });
       return;
     }
 

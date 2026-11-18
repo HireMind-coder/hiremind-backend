@@ -10,7 +10,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
-import { useListEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
+import { useListEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee, customFetch } from "@workspace/api-client-react";
 import { useRouter } from "expo-router";
 
 const SALARY_TYPES = ["monthly", "daily"];
@@ -20,8 +21,6 @@ const DEPARTMENTS = ["Engineering", "Design", "Developer", "Management", "HR", "
 
 interface EmployeeForm {
   name: string;
-
-
   phone: string;
   email: string;
   role: string;
@@ -140,6 +139,15 @@ function EmployeeCard({ employee, colors, onEdit, onDelete, onEnroll }: {
           <Pressable onPress={(e) => { e.stopPropagation?.(); onEnroll(employee); }} hitSlop={8}>
             <Ionicons name="scan-outline" size={16} color={isEnrolled ? "#16A34A" : colors.mutedForeground} />
           </Pressable>
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation?.();
+              router.push({ pathname: "/documents", params: { employeeId: String(employee.id), name: employee.name } });
+            }}
+            hitSlop={8}
+          >
+            <Ionicons name="folder-open-outline" size={16} color={colors.mutedForeground} />
+          </Pressable>
           <Pressable onPress={(e) => { e.stopPropagation?.(); onEdit(employee); }} hitSlop={8}>
             <Ionicons name="pencil-outline" size={16} color={colors.primary} />
           </Pressable>
@@ -165,6 +173,14 @@ export default function EmployeesScreen() {
   const [enrollTarget, setEnrollTarget] = useState<any | null>(null);
 
   const { data: employees, isLoading, error, refetch } = useListEmployees({ search: search || undefined });
+    // Departments created in Company Settings (falls back to the built-in list when none exist)
+    const { data: companyDepartments } = useQuery({
+      queryKey: ["company-departments"],
+      queryFn: () => customFetch<{ id: number; name: string }[]>("/api/company/departments"),
+      throwOnError: false,
+    });
+    const departmentOptions =
+      companyDepartments && companyDepartments.length > 0 ? companyDepartments.map((d) => d.name) : DEPARTMENTS;
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
@@ -335,7 +351,7 @@ export default function EmployeesScreen() {
             <Dropdown label="Role *" value={form.role} options={ROLES} placeholder="Select role..." onSelect={(v) => setForm(f => ({ ...f, role: v }))} colors={colors} />
 
             {/* Department Dropdown */}
-            <Dropdown label="Department" value={form.department} options={DEPARTMENTS} placeholder="Select department..." onSelect={(v) => setForm(f => ({ ...f, department: v }))} colors={colors} />
+            <Dropdown label="Department" value={form.department} options={departmentOptions} placeholder="Select department..." onSelect={(v) => setForm(f => ({ ...f, department: v }))} colors={colors} />
 
             {/* Joining Date */}
             <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Joining Date (YYYY-MM-DD)</Text>

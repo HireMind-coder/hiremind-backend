@@ -11,8 +11,10 @@ import { useListAttendance, useMarkAttendance } from "@workspace/api-client-reac
 import { useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
+import { getDeviceInfo, isMockedLocation } from "@/services/deviceInfo";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
+import { syncLiveTrackingOnCheckIn, stopLiveTracking } from "@/services/liveTracking";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -189,28 +191,42 @@ export default function EmployeeAttendanceScreen() {
     const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
     const { latitude, longitude } = location.coords;
     const checkIn = formatTime(new Date());
+    const device = await getDeviceInfo();
     markAttendance.mutate(
-      { data: { records: [{ employeeId: empId, date: todayStr, status: "present", checkIn, checkOut: null, latitude, longitude }] } },
+      {
+        data: {
+          records: [{ employeeId: empId, date: todayStr, status: "present", checkIn, checkOut: null, latitude, longitude }],
+          ...device,
+          mocked: isMockedLocation(location),
+        } as any,
+      },
       {
         onSuccess: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           invalidate();
+          void syncLiveTrackingOnCheckIn(empId);
           Alert.alert("✅ Checked In", `Time: ${checkIn}\n📍 Location saved`);
         },
-        onError: () => Alert.alert("Error", "Failed to check in"),
+        onError: (e: any) => Alert.alert("Could not check in", e?.data?.error ?? "Failed to check in"),
       }
     );
   };
 
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
     if (!todayRecord?.checkIn) { Alert.alert("Not Checked In", "Please check in first"); return; }
     if (todayRecord?.checkOut) { Alert.alert("Already Checked Out", `You checked out at ${formatDisplayTime(todayRecord.checkOut)}`); return; }
     const checkOut = formatTime(new Date());
+    const device = await getDeviceInfo();
     markAttendance.mutate(
-      { data: { records: [{ employeeId: empId, date: todayStr, status: "present", checkIn: todayRecord.checkIn, checkOut }] } },
       {
-        onSuccess: () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); invalidate(); },
-        onError: () => Alert.alert("Error", "Failed to check out"),
+        data: {
+          records: [{ employeeId: empId, date: todayStr, status: "present", checkIn: todayRecord.checkIn, checkOut }],
+          ...device,
+        } as any,
+      },
+      {
+       onSuccess: () => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); invalidate(); void stopLiveTracking(); },
+        onError: (e: any) => Alert.alert("Could not check out", e?.data?.error ?? "Failed to check out"),
       }
     );
   };

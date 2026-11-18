@@ -13,15 +13,29 @@ import { useListPayments, useCreatePayment, useDeletePayment, useListEmployees }
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-const PAYMENT_TYPES = ["salary", "advance", "bonus", "deduction"];
+const PAYMENT_TYPES = ["salary", "advance", "bonus", "incentive", "reimbursement", "deduction", "loan", "loan_repayment", "tds"];
+
+// Types that are taken back from the employee (shown with a minus sign)
+const DEDUCTION_TYPES = ["deduction", "loan_repayment", "tds"];
+
+const TYPE_LABELS: Record<string, string> = {
+  salary: "Salary", advance: "Advance", bonus: "Bonus", incentive: "Incentive",
+  reimbursement: "Reimbursement", deduction: "Deduction", loan: "Loan",
+  loan_repayment: "Loan repayment", tds: "TDS",
+};
 const PAYMENT_METHODS = ["cash", "upi", "bank"];
 
 const TYPE_COLORS: Record<string, { color: string; bg: string }> = {
   salary: { color: "#576DFA", bg: "#EDECFE" },
   advance: { color: "#D97706", bg: "#FEF3C7" },
   bonus: { color: "#16A34A", bg: "#DCFCE7" },
-  deduction: { color: "#DC2626", bg: "#FEE2E2" },
-};
+   deduction: { color: "#DC2626", bg: "#FEE2E2" },
+   incentive: { color: "#0D9488", bg: "#CCFBF1" },
+   reimbursement: { color: "#2563EB", bg: "#DBEAFE" },
+   loan: { color: "#7C3AED", bg: "#EDE9FE" },
+   loan_repayment: { color: "#9333EA", bg: "#F3E8FF" },
+   tds: { color: "#B45309", bg: "#FEF3C7" },
+ };
 
 const METHOD_COLORS: Record<string, { color: string; bg: string }> = {
   cash: { color: "#16A34A", bg: "#DCFCE7" },
@@ -49,7 +63,7 @@ function PaymentRow({ payment, colors, onDelete }: { payment: any; colors: any; 
           <Text style={[styles.empName, { color: colors.foreground }]} numberOfLines={1}>{payment.employeeName}</Text>
           <View style={styles.badges}>
             <View style={[styles.badge, { backgroundColor: t.bg }]}>
-              <Text style={[styles.badgeText, { color: t.color }]}>{payment.type}</Text>
+              <Text style={[styles.badgeText, { color: t.color }]}>{TYPE_LABELS[payment.type] ?? payment.type}</Text>
             </View>
             <View style={[styles.badge, { backgroundColor: m.bg }]}>
               <Text style={[styles.badgeText, { color: m.color }]}>{payment.method}</Text>
@@ -60,8 +74,8 @@ function PaymentRow({ payment, colors, onDelete }: { payment: any; colors: any; 
           </View>
         </View>
         <View style={styles.amountCol}>
-          <Text style={[styles.amount, { color: payment.type === "deduction" ? "#DC2626" : "#16A34A" }]}>
-            {payment.type === "deduction" ? "-" : "+"}₹{payment.amount.toLocaleString("en-IN")}
+          <Text style={[styles.amount, { color: DEDUCTION_TYPES.includes(payment.type) ? "#DC2626" : "#16A34A" }]}>
+            {DEDUCTION_TYPES.includes(payment.type) ? "-" : "+"}₹{payment.amount.toLocaleString("en-IN")}
           </Text>
           <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
             {payment.month && payment.year ? `${MONTH_NAMES[payment.month - 1]} ${payment.year}` : "—"}
@@ -172,8 +186,8 @@ export default function PaymentsScreen() {
   };
 
   const paymentsList: any[] = payments ?? [];
-  const totalIn = paymentsList.filter(p => p.type !== "deduction").reduce((s, p) => s + p.amount, 0);
-  const totalDeduct = paymentsList.filter(p => p.type === "deduction").reduce((s, p) => s + p.amount, 0);
+  const totalIn = paymentsList.filter(p => !DEDUCTION_TYPES.includes(p.type)).reduce((s, p) => s + p.amount, 0);
+  const totalDeduct = paymentsList.filter(p => DEDUCTION_TYPES.includes(p.type)).reduce((s, p) => s + p.amount, 0);
   const selectedEmployee = employees?.find((e: any) => e.id === form.employeeId);
 
   return (
@@ -287,7 +301,7 @@ export default function PaymentsScreen() {
                   onPress={() => setForm(f => ({ ...f, type: t }))}
                 >
                   <Text style={[styles.optionBtnText, { color: form.type === t ? "#fff" : colors.foreground }]}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                      {TYPE_LABELS[t] ?? t}
                   </Text>
                 </Pressable>
               ))}

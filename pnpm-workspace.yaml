@@ -4,6 +4,12 @@ packages:
   - lib/integrations/*
   - scripts
 
+allowBuilds:
+  '@tensorflow/tfjs-node': false
+  canvas: set this to true or false
+  core-js: false
+  esbuild: set this to true or false
+
 autoInstallPeers: false
 
 catalog:

@@ -5,6 +5,7 @@ import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useAccessRole } from "@/hooks/useAccessRole";
 
 export default function EmployeeTabLayout() {
   const colors = useColors();
@@ -13,6 +14,7 @@ export default function EmployeeTabLayout() {
   const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
+  const { canMarkAttendance } = useAccessRole();
 
   return (
     <Tabs
@@ -64,6 +66,14 @@ export default function EmployeeTabLayout() {
         options={{
           title: "Leaves",
           tabBarIcon: ({ color }) => <Ionicons name="time" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="team"
+        options={{
+          title: "Team",
+          href: canMarkAttendance ? undefined : null,
+          tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} />,
         }}
       />
       <Tabs.Screen

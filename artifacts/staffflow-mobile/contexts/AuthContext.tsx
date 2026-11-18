@@ -1,3 +1,4 @@
+import { unregisterPush } from "@/services/pushNotifications";
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -262,6 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+      await unregisterPush();
     // Clear both admin and employee storage
     await deleteToken(TOKEN_KEY);
     await deleteToken(EMP_TOKEN_KEY);

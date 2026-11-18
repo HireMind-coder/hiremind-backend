@@ -68,20 +68,36 @@ export default function DashboardScreen() {
       refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
       {/* Greeting */}
-      <View style={[styles.greeting, { paddingTop: topPadding + 8 }]}>
-        <View>
-          <Text style={[styles.greetingName, { color: colors.foreground }]}>
+      <View
+        style={[
+          styles.greeting,
+          { paddingTop: topPadding + 8, flexDirection: "column", alignItems: "stretch" },
+        ]}
+      >
+        {/* One line: company name + bell + avatar */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text
+            style={[styles.greetingName, { color: colors.foreground, flex: 1, marginRight: 12 }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+          >
             {user?.companyName ?? "Dashboard"}
           </Text>
-          <Text style={[styles.greetingUser, { color: colors.mutedForeground }]}>
-            Welcome back, {user?.name?.split(" ")[0]}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flexShrink: 0 }}>
+            <Pressable onPress={() => router.push("/notifications")} hitSlop={10}>
+              <Ionicons name="notifications-outline" size={26} color={colors.foreground} />
+            </Pressable>
+            <View style={[styles.avatarCircle, { backgroundColor: colors.primary }]}>
+              <Text style={styles.avatarText}>{user?.name?.charAt(0) ?? "A"}</Text>
+            </View>
+          </View>
         </View>
-        <View style={[styles.avatarCircle, { backgroundColor: colors.primary }]}>
-          <Text style={styles.avatarText}>{user?.name?.charAt(0) ?? "A"}</Text>
-        </View>
-      </View>
 
+        <Text style={[styles.greetingUser, { color: colors.mutedForeground, marginTop: -4 }]}>
+          Welcome back, {user?.name?.split(" ")[0]}
+        </Text>
+      </View>
       {/* Stats grid */}
       <View style={styles.statsGrid}>
         <StatCard
@@ -171,7 +187,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   greetingName: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
   },
   greetingUser: {

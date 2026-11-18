@@ -3,6 +3,8 @@ import { db, attendanceTable, employeesTable, usersTable } from "@workspace/db";
 import { sendAttendanceEmail } from "../lib/emailService";
 import { eq, and, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { notifyAdmin, notifyEmployee } from "../lib/pushService";
+import { enforceAttendanceRules } from "../lib/attendanceRules";
 
 import {
   MarkAttendanceBody,
@@ -125,7 +127,25 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
 
   const adminEmployees = await db.select().from(employeesTable).where(eq(employeesTable.adminId, adminId));
   const employeeMap = new Map(adminEmployees.map(e => [e.id, e.name]));
-
+  // Attendance Settings (geofence / fake GPS / device verification).
+  // Only applies when an employee marks their OWN attendance from their phone.
+  for (const record of parsed.data.records) {
+    const rule = await enforceAttendanceRules({
+      adminId,
+      user: (req as any).user,
+      employeeId: record.employeeId,
+      latitude: record.latitude ?? null,
+      longitude: record.longitude ?? null,
+      mocked: req.body?.mocked,
+      deviceId: req.body?.deviceId,
+      deviceName: req.body?.deviceName,
+      needsLocation: !record.checkOut,
+    });
+    if (!rule.ok) {
+      res.status(rule.status).json({ error: rule.error, code: rule.code });
+      return;
+    }
+  }
   const results = [];
   for (const record of parsed.data.records) {
     if (!employeeMap.has(record.employeeId)) continue;
@@ -197,6 +217,31 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
          console.log("Email notification failed:", err);
        }
        // ← EMAIL CODE ENDS HERE
+
+    // Push: employee check-in/out -> admin. Admin-marked (kiosk) -> that employee.
+    try {
+      const isEmployeeCaller = (req as any).user.role === 'employee';
+      const name = employeeMap.get(att.employeeId) || 'Employee';
+      const isOut = !!att.checkOut;
+      if (att.checkIn || att.checkOut) {
+        const time = isOut ? att.checkOut : att.checkIn;
+        if (isEmployeeCaller) {
+          void notifyAdmin(adminId, {
+            title: isOut ? 'Check-out' : 'Check-in',
+            body: `${name} ${isOut ? 'checked out' : 'checked in'} at ${time}`,
+            screen: '/(tabs)/attendance',
+          });
+        } else {
+          void notifyEmployee(att.employeeId, {
+            title: isOut ? 'Check-out recorded' : 'Check-in recorded',
+            body: `Your ${isOut ? 'check-out' : 'check-in'} was recorded at ${time}`,
+            screen: '/(employee)/attendance',
+          });
+        }
+      }
+    } catch (err) {
+      console.log('Push notification failed:', err);
+    }
   }
 
   res.json(results);

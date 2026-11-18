@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, tasksTable, employeesTable } from "@workspace/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { notifyEmployee } from "../lib/pushService";
 import {
   CreateTaskBody,
   UpdateTaskBody,
@@ -60,6 +61,11 @@ router.post("/tasks", requireAuth, async (req, res): Promise<void> => {
     ...parsed.data,
     status: "pending",
   }).returning();
+  void notifyEmployee(employee.id, {
+    title: 'New task assigned',
+    body: task.title,
+    screen: '/(employee)/tasks',
+  });
 
   res.status(201).json({
     ...task,

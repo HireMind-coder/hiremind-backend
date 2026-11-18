@@ -9,6 +9,7 @@
   },
   "private": true,
   "devDependencies": {
+    "@babel/traverse": "7.29.0",
     "prettier": "^3.8.1",
     "tsx": "catalog:",
     "typescript": "~5.9.2"

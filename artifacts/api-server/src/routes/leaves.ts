@@ -3,6 +3,8 @@ import { requireAuth, type AuthRequest } from "../lib/auth";
 import { db } from "@workspace/db";
 import { leavesTable, leaveBalancesTable, employeesTable } from "@workspace/db/schema";
 import { eq, and, gte, lte, desc, inArray } from "drizzle-orm";
+import { notifyAdmin, notifyEmployee } from "../lib/pushService";
+import { getLeaveOptions, saveLeaveAttachment } from "../lib/leaveRules";
 
 const router = Router();
 
@@ -34,6 +36,8 @@ router.get("/leaves", requireAuth, async (req: AuthRequest, res): Promise<void> 
     startDate: leavesTable.startDate,
     endDate: leavesTable.endDate,
     days: leavesTable.days,
+    halfDay: leavesTable.halfDay,
+    attachmentUrl: leavesTable.attachmentUrl,
     reason: leavesTable.reason,
     status: leavesTable.status,
     approverNote: leavesTable.approverNote,
@@ -60,9 +64,25 @@ router.get("/leaves", requireAuth, async (req: AuthRequest, res): Promise<void> 
 router.post("/leaves", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const adminId = req.user!.adminId;
   const { employeeId, type, startDate, endDate, reason } = req.body;
+  const halfDay = req.body.halfDay === true;
 
   if (!employeeId || !type || !startDate || !endDate) {
     res.status(400).json({ error: "employeeId, type, startDate, endDate are required" });
+    return;
+  }
+
+  const isDate = (s: unknown) =>
+    typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(`${s}T00:00:00Z`).getTime());
+  if (!isDate(startDate) || !isDate(endDate)) {
+    res.status(400).json({ error: "Dates must be in YYYY-MM-DD format" });
+    return;
+  }
+  if (endDate < startDate) {
+    res.status(400).json({ error: "To date cannot be before From date" });
+    return;
+  }
+  if (halfDay && startDate !== endDate) {
+    res.status(400).json({ error: "A half-day leave must be for a single date" });
     return;
   }
 
@@ -71,20 +91,65 @@ router.post("/leaves", requireAuth, async (req: AuthRequest, res): Promise<void>
   if (!emp) { res.status(404).json({ error: "Employee not found" }); return; }
 
   const msPerDay = 1000 * 60 * 60 * 24;
-  const days = Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / msPerDay) + 1;
+  const days = halfDay
+    ? 0.5
+    : Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / msPerDay) + 1;
   const year = new Date(startDate).getFullYear();
 
   await ensureLeaveBalance(employeeId, year);
 
+  let leaveType: string = type;
+
+  // Extra checks when an employee asks for their own leave
+  if (req.user!.role === "employee") {
+    const overlapping = await db.select({ id: leavesTable.id }).from(leavesTable)
+      .where(and(
+        eq(leavesTable.employeeId, employeeId),
+        inArray(leavesTable.status, ["pending", "approved"]),
+        lte(leavesTable.startDate, endDate),
+        gte(leavesTable.endDate, startDate),
+      )).limit(1);
+    if (overlapping.length > 0) {
+      res.status(409).json({ error: "You already have a leave request for these dates" });
+      return;
+    }
+
+    const options = await getLeaveOptions(adminId, employeeId, year);
+    const option = options.find((o) => o.key.toLowerCase() === String(type).toLowerCase());
+    if (!option) { res.status(400).json({ error: "Invalid leave type" }); return; }
+    if (option.balance != null && days > option.balance) {
+      res.status(400).json({ error: `Not enough ${option.name} balance. You have ${option.balance} day(s) left.` });
+      return;
+    }
+    leaveType = option.key;
+  }
+
+  let attachmentUrl: string | null = null;
+  if (req.body.attachmentBase64) {
+    const saved = saveLeaveAttachment(req.body.attachmentBase64);
+    if ("error" in saved) { res.status(400).json({ error: saved.error }); return; }
+    attachmentUrl = saved.url;
+  }
+
   const [leave] = await db.insert(leavesTable).values({
     employeeId,
-    type,
+    type: leaveType,
     startDate,
     endDate,
     days,
+    halfDay,
+    attachmentUrl,
     reason: reason || null,
     status: "pending",
   }).returning();
+
+  if (req.user!.role === 'employee') {
+    void notifyAdmin(adminId, {
+      title: 'New leave request',
+      body: `${emp.name} requested ${halfDay ? "a half day" : `${days} day(s)`} of ${leaveType} leave`,
+      screen: '/leaves',
+    });
+  }
 
   res.status(201).json(leave);
 });
@@ -121,6 +186,11 @@ router.patch("/leaves/:id/approve", requireAuth, async (req: AuthRequest, res): 
       eq(leaveBalancesTable.year, year)
     ));
   }
+  void notifyEmployee(leave.employeeId, {
+    title: 'Leave approved',
+    body: `Your ${leave.type} leave (${leave.startDate} to ${leave.endDate}) was approved`,
+    screen: '/(employee)/leaves',
+  });
 
   res.json(updated);
 });
@@ -143,6 +213,12 @@ router.patch("/leaves/:id/reject", requireAuth, async (req: AuthRequest, res): P
     approverNote: approverNote || null,
     updatedAt: new Date(),
   }).where(eq(leavesTable.id, Number(id))).returning();
+
+  void notifyEmployee(leave.employeeId, {
+    title: 'Leave rejected',
+    body: `Your ${leave.type} leave (${leave.startDate} to ${leave.endDate}) was rejected`,
+    screen: '/(employee)/leaves',
+  });
 
   res.json(updated);
 });
